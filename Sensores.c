@@ -73,14 +73,67 @@ void *acao_sensor(void *j){
 
 }
 
-void gerarDado(int i){
-  int_rand=(random()%150);
-  coletar(int_rand, i);
+void liberaMatriz(){
+    for(y = 0; y < 4; y++){
+       	matrizDados[y][0] = -1;
+      	matrizDados[y][1] = -1;
+    } 
 }
 
-void coletar(){
-	
+void monitor(){
+    Node *nodoA=(Node *) malloc(sizeof(Node));
+    Node *nodoB=(Node *) malloc(sizeof(Node));
+
+    nodoA->proximo=NULL;
+    nodoB->proximo=NULL;
+
+    nodoA->conjuntoDados[0][0] = matrizDados[0][0];
+    nodoA->conjuntoDados[0][1] = matrizDados[0][1];
+    nodoA->conjuntoDados[1][0] = matrizDados[1][0];
+    nodoA->conjuntoDados[1][1] = matrizDados[1][1];
+    insereNodoFila(nodoA);
+
+    nodoB->conjuntoDados[0][0] = matrizDados[2][0];
+    nodoB->conjuntoDados[0][1] = matrizDados[2][1];
+    nodoB->conjuntoDados[1][0] = matrizDados[3][0];
+    nodoB->conjuntoDados[1][1] = matrizDados[3][1];
+    insereNodoFila(nodoB);
+
+    liberaMatriz();
 }
+
+void coletar(int id){
+	 int dado=(random()%150);
+    for(x=0; x<4; x++){
+        pthread_mutex_lock(&mutex);
+        if(matrizDados[x][0]==-1){
+            if(idPresente(id)){
+                matrizDados[x][0]=id;
+                matrizDados[x][1]=dado;
+                if(x==3){
+                    printaMatriz();
+                    monitor();
+                    for(z=0; z<N; z++){
+                        if(z!=id){
+                            sem_post(&sem_sensores[z]);
+                        }
+                    }
+                    pthread_mutex_unlock(&mutex);
+                    sleep(3);
+                }else{
+                    pthread_mutex_unlock(&mutex);
+                    sem_wait(&sem_sensores[id]);
+                }
+            }else{
+                pthread_mutex_unlock(&mutex);
+                sem_wait(&sem_sensores[id]);
+            }
+        }else{
+            pthread_mutex_unlock(&mutex);
+        }
+    }
+}
+
 int main(){
 
   int opcao, opcao2;
