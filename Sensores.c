@@ -64,15 +64,6 @@ void insereNodoFila(Node *novoNodo){
 		tamanhoFila++;
 }
 
-void *acao_sensor(void *j){
-  int i = *(int*) j;
-  while(tamanhoFila<MAX_COLETAS){
-    sleep(1);
-    gerarDado(i);
-  }
-
-}
-
 void liberaMatriz(){
     for(y = 0; y < 4; y++){
        	matrizDados[y][0] = -1;
@@ -108,6 +99,14 @@ int idPresente(int id){
   return 1;
 }
 
+void printaMatriz(){
+    int cont;
+    printf("\n\n--------- Coleta -----------");
+    for(cont=0; cont<LIN; cont++){
+        printf("\nO sensor de id %d coletou o dado %d", matrizDados[cont][0], matrizDados[cont][1]);
+    }
+}
+
 void coletar(int id){
 	 int dado=(random()%150);
     for(x=0; x<4; x++){
@@ -140,12 +139,57 @@ void coletar(int id){
     }
 }
 
-void printaMatriz(){
-    int cont;
-    printf("\n\n--------- Coleta -----------");
-    for(cont=0; cont<LIN; cont++){
-        printf("\nO sensor de id %d coletou o dado %d", matrizDados[cont][0], matrizDados[cont][1]);
+void *acao_sensor(void *j){
+  int i = *(int*) j;
+  while(tamanhoFila<MAX_COLETAS){
+    sleep(1);
+    coletar(i);
+  }
+}
+
+void visualizar(){
+  int dadosSensores[5][MAX_COLETAS];
+  Node *tmp;
+  tmp = fila->proximo;
+  int countDados[5]={0, 0, 0, 0, 0};
+
+  while( tmp != NULL){
+    for(y=0; y<2; y++){
+			int idAux = tmp->conjuntoDados[y][0];
+      dadosSensores[idAux][countDados[idAux]]=tmp->conjuntoDados[y][1];
+      countDados[idAux]++;
     }
+    tmp = tmp->proximo;
+  }
+  double media;
+   double acmDados;
+  for(y=0; y<N; y++){
+    acmDados=0;
+    for(z=0; z<countDados[y]; z++){
+      acmDados+=dadosSensores[y][z];
+    }
+    media = acmDados/countDados[y];
+
+    printf("\n\n------------------------ Sensor ID %d ------------------------", y);
+    switch (y) {
+      case 0:
+        printf("\nA média coletada pelo sensor de ritmo cardíaco é: %.2f", media);
+        break;
+      case 1:
+        printf("\nA média coletada pelo sensor de suprimento sanguíneo é: %.2f", media);
+        break;
+      case 2:
+        printf("\nA média coletada pelo sensor de suprimento de oxigênio é: %.2f", media);
+        break;
+      case 3:
+        printf("\nA média coletada pelo sensor de despolarização atrial é: %.2f", media);
+        break;
+      case 4:
+        printf("\nA média coletada pelo sensor de repolarização ventricular é: %.2f", media);
+        break;
+    }
+    printf("\nA quantidade de vezes que foi escolhido: %d", countDados[y]);
+  }
 }
 
 int main(){
