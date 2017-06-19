@@ -5,12 +5,15 @@
 #include<unistd.h>
 
 #define N 5
+#define LIN 4
+#define COL 2
+
 #define MAX_COLETAS 20
 
 int i, int_rand, x, y, z;
 int tamanhoFila, nrExames;
 float float_rand;
-int matrizDados[4][2];  //Primeira coluna-> id do sensor; Segunda coluna -> dado do sensor; Duas primeiras linhas -> Conjunto A; Duas �ltimas linhas -> Conjunto B
+int matrizDados[LIN][COL];  //Primeira coluna-> id do sensor; Segunda coluna -> dado do sensor; Duas primeiras linhas -> Conjunto A; Duas �ltimas linhas -> Conjunto B
 
 pthread_mutex_t mutex;
 sem_t sem_sensores[N];
@@ -29,7 +32,6 @@ void inicializaFila(Node *fila) {
 	tamanhoFila=0;
   nodoAtual=0;
 }
-
 int filaVazia(){
     if(fila->proximo == NULL){
         return 1;
@@ -37,7 +39,6 @@ int filaVazia(){
         return 0;
     }
 }
-
 void liberaFila(){
 	if(!filaVazia()){
 		Node *proximoNodo, *atual;
@@ -50,7 +51,6 @@ void liberaFila(){
 	}
 	tamanhoFila=0;
 }
-
 void insereNodoFila(Node *novoNodo){
 		if(filaVazia()){
 			fila->proximo=novoNodo;
@@ -77,7 +77,7 @@ void liberaMatriz(){
     for(y = 0; y < 4; y++){
        	matrizDados[y][0] = -1;
       	matrizDados[y][1] = -1;
-    } 
+    }
 }
 
 void monitor(){
@@ -87,19 +87,25 @@ void monitor(){
     nodoA->proximo=NULL;
     nodoB->proximo=NULL;
 
-    nodoA->conjuntoDados[0][0] = matrizDados[0][0];
-    nodoA->conjuntoDados[0][1] = matrizDados[0][1];
-    nodoA->conjuntoDados[1][0] = matrizDados[1][0];
-    nodoA->conjuntoDados[1][1] = matrizDados[1][1];
+		for(y=0; y<2; y++){
+			for(z=0; z<2; z++){
+					nodoA->conjuntoDados[y][z] = matrizDados[y][z];
+					nodoB->conjuntoDados[y][z] = matrizDados[y+2][z];
+			}
+		}
     insereNodoFila(nodoA);
-
-    nodoB->conjuntoDados[0][0] = matrizDados[2][0];
-    nodoB->conjuntoDados[0][1] = matrizDados[2][1];
-    nodoB->conjuntoDados[1][0] = matrizDados[3][0];
-    nodoB->conjuntoDados[1][1] = matrizDados[3][1];
     insereNodoFila(nodoB);
 
     liberaMatriz();
+}
+
+int idPresente(int id){
+  for(z=0; z<LIN; z++){
+    if(matrizDados[z][0]==id){
+        return 0;
+    }
+  }
+  return 1;
 }
 
 void coletar(int id){
@@ -110,7 +116,7 @@ void coletar(int id){
             if(idPresente(id)){
                 matrizDados[x][0]=id;
                 matrizDados[x][1]=dado;
-                if(x==3){
+                if(x==COL-1){
                     printaMatriz();
                     monitor();
                     for(z=0; z<N; z++){
@@ -131,6 +137,14 @@ void coletar(int id){
         }else{
             pthread_mutex_unlock(&mutex);
         }
+    }
+}
+
+void printaMatriz(){
+    int cont;
+    printf("\n\n--------- Coleta -----------");
+    for(cont=0; cont<LIN; cont++){
+        printf("\nO sensor de id %d coletou o dado %d", matrizDados[cont][0], matrizDados[cont][1]);
     }
 }
 
